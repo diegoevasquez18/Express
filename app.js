@@ -4,6 +4,8 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+var session = require('express-session');
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
@@ -19,8 +21,33 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use(session({
+  secret:'Abcdefghij123456789!',
+  resave: false,
+  saveUninitialized: true
+}));
+
+//app.use('/', indexRouter);
+//app.use('/users', usersRouter);
+
+app.get('/', function (req, res) {
+  var conocido = Boolean(req.session.nombre);
+  res.render('index', {
+    title: 'Sesiones en Express.js',
+    conocido: conocido,
+    nombre: req.session.nombre
+  });
+});
+app.post('/ingresar', function (req, res) {
+  if (req.body.nombre) {
+    req.session.nombre = req.body.nombre
+  }
+  res.redirect('/');
+});
+app.get('/salir', function (req, res) {
+  req.session.destroy();
+  res.redirect('/');
+});
 
 app.get('/products', function(req, res){
   res.send('Esta es la lista de productos')
