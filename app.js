@@ -4,6 +4,10 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+require('dotenv').config();
+
+var pool = require('./models/bd')
+
 var session = require('express-session');
 
 var indexRouter = require('./routes/index');
@@ -21,14 +25,18 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+pool.query("select * from empleados").then(function(resultados){
+  console.log(resultados);
+});
+
 app.use(session({
   secret:'Abcdefghij123456789!',
   resave: false,
   saveUninitialized: true
 }));
 
-//app.use('/', indexRouter);
-//app.use('/users', usersRouter);
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
 
 app.get('/', function (req, res) {
   var conocido = Boolean(req.session.nombre);
