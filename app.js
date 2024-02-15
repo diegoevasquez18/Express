@@ -5,13 +5,17 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 require('dotenv').config();
-
 var pool = require('./models/bd')
-
 var session = require('express-session');
+var fileUpload = require('express-fileupload');
+var cors = require('cors');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var loginRouter = require('./routes/admin/login');
+var adminRouter = require('./routes/admin/novedades');
+var apiRouter = require('./routes/api');
+
 
 var app = express();
 
@@ -25,18 +29,39 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-pool.query("select * from empleados").then(function(resultados){
+pool.query("select * from usuarios").then(function (resultados) {
   console.log(resultados);
 });
 
 app.use(session({
-  secret:'Abcdefghij123456789!',
+  secret: 'Abcdefghij123456789!',
   resave: false,
   saveUninitialized: true
 }));
 
+secured = async (req, res, next) => {
+  try {
+    console.log(req.session.id_usuario);
+    if (req.session.id_usuario) {
+      next();
+    } else {
+      res.redirect('/admin/login');
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+app.use(fileUpload({ 
+  useTempFiles: true,
+  tempFileDir: '/tmp/'
+ }));
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/admin/login', loginRouter);
+app.use('/admin/novedades', secured, adminRouter);
+app.use('/api', cors(), apiRouter);
+
 
 app.get('/', function (req, res) {
   var conocido = Boolean(req.session.nombre);
@@ -57,24 +82,24 @@ app.get('/salir', function (req, res) {
   res.redirect('/');
 });
 
-app.get('/products', function(req, res){
+app.get('/products', function (req, res) {
   res.send('Esta es la lista de productos')
 })
-app.get('/ecofriendly', function(req, res){
+app.get('/ecofriendly', function (req, res) {
   res.send('Reutilizamos material para reducir el impacto en medio ambiente')
 })
-app.get('/contact', function(req, res){
+app.get('/contact', function (req, res) {
   res.send('Unite al equipo!')
 })
 
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
