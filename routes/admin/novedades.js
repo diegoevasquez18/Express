@@ -81,19 +81,17 @@ router.get('/eliminar/:id', async (req, res, next) => {
 
 router.get('/modificar/:id', async (req, res, next) => {
     var id = req.params.id;
-    console.log(req.params.id)
     var novedad = await novedadesModel.getNovedadById(id);
     res.render('admin/modificar', {
         layout: 'admin/layout',
         novedad
     });
 });
-
 router.post('/modificar', async (req, res, next) => {
     try {
 
-        let img_id = req.body.img_original;
-        let borrar_img_vieja = false;
+        var img_id = req.body.img_original;
+        var borrar_img_vieja = false;
 
         if (req.body.img_delete === "1") {
             img_id = null;
@@ -109,22 +107,24 @@ router.post('/modificar', async (req, res, next) => {
             await (destroy(req.body.img_original));
         }
 
+
         var obj = {
-            titulo: req.body.titulo,
-            subtitulo: req.body.subtitulo,
-            cuerpo: req.body.cuerpo,
+            name: req.body.name,
+            size: req.body.size,
+            description: req.body.description,
             img_id
         }
-        
-    }catch (error) {
+        await novedadesModel.modificarNovedadById(obj, req.body.id);
+        res.redirect('/admin/novedades');
+    }
+    catch (error) {
         console.log(error)
-        res.render('admin/agregar', {
+        res.render('admin/modificar', {
             layout: 'admin/layout',
-            error: true, message: 'No se cargo la novedad'
-        });
-    }})
-
-
+            error: true, message: 'No se modifico la novedad'
+        })
+    }
+})
 
 
 module.exports = router;
